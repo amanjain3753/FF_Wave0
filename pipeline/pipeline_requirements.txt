@@ -1,0 +1,12 @@
+azure-identity
+azure-keyvault-secrets
+databricks-sdk
+httpx
+sphinx
+sphinx_rtd_theme
+sphinxcontrib.exceltable
+pyspark
+-- extra-index-url=https://pkgs.dev.azure.com/marsanalytics/_packaging/simpel_framework/pypi/simple/
+simpel-framework
+scipy == 1.7.2
+holidays

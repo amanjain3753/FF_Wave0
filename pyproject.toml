@@ -1,0 +1,38 @@
+[project]
+name = "mwd30anaplan"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Aryan Bhan",email = "aryan.bhan@effem.com"}
+]
+readme = "README.md"
+
+packages = [
+    { include = "mwd30anaplan"}
+]
+
+exclude = ["mwd30anaplan/test"]
+
+[tool.poetry.scripts]
+run_etl = "mwd30anaplan.data_engineering.main.run_data_processing:main"
+
+[tool.poetry.dependencies]
+python = ">=3.10"
+keyring = "25.6.0"
+ipython = "^8.0"
+artifacts-keyring = "0.4.0"
+openpyxl = "3.1.2"
+simpel-framework = {version = "2.1.5a0", source = "simpel-framework"}
+pytest = "^9.0.1"
+pyspark = "^4.0.1"
+pyspark_test = "^0.2.0"
+pytest-mock = "^3.15.1"
+pytest-cov = "^7.0.0"
+pandas = "^2.3.3"
+[[tool.poetry.source]]
+name = "simpel-framework"
+url = "https://pkgs.dev.azure.com/marsanalytics/_packaging/simpel_framework/pypi/simple/"
+priority  = "supplemental"
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

@@ -1,0 +1,62 @@
+resources:
+  jobs:
+    imo_fin_anaplan_manual_data_upload_pl:
+      name: "IMO_FIN_ANAPLAN_MANUAL_DATA_UPLOAD_PL"
+
+      run_as:
+        service_principal_name: ${var.run_as_sp_name}
+
+      permissions:
+        - level: CAN_MANAGE
+          group_name: ${var.group}
+
+      tasks:
+        - task_key: imo_fin_manual_anaplan_api_process
+          description: "Manually send one IMO Fin data asset to Anaplan"
+          python_wheel_task:
+            package_name: mwd30anaplan
+            entry_point: run_etl
+            parameters:
+              - --process_name
+              - IMO_FIN_MANUAL_UPLOAD
+              - --environment
+              - ${var.param_env}
+              - --dataframe
+              - "{{job.parameters.dataframe}}"
+              - --year_period_list
+              - "{{job.parameters.year_period_list}}"
+
+          job_cluster_key: mwd30anaplan_job_cluster
+          libraries:
+            - whl: /Workspace/Shared/simple_framework_whl_v2/simpel_framework-2.1.5a0-py3-none-any.whl
+            - whl: /Workspace/MWD30ANAPLAN/.bundle/mwd30anaplan/${var.env_var}/artifacts/.internal/mwd30anaplan-0.1.0-py3-none-any.whl
+
+      job_clusters:
+        - job_cluster_key: mwd30anaplan_job_cluster
+          new_cluster:
+            cluster_name: ""
+            spark_version: "16.4.x-scala2.12"
+            spark_env_vars:
+              cicd_sp_client_id: "{{secrets/${var.secret_scope}/dna-dbs-sp-cicd-appid}}"
+              cicd_sp_client_secret: "{{secrets/${var.secret_scope}/dna-dbs-sp-cicd-appsecret}}"
+            node_type_id: "Standard_D4ads_v5"
+            driver_node_type_id: "Standard_D8ads_v5"
+            autoscale:
+              min_workers: 1
+              max_workers: 8
+            instance_pool_id: ${var.instance_pool_id}
+            driver_instance_pool_id: ${var.instance_pool_id}
+            runtime_engine: "STANDARD"
+            data_security_mode: USER_ISOLATION
+            policy_id: ${var.policy_id}
+
+      parameters:
+        # One of: actuals, tpm, supply, demand, customer_masterdata,
+        # product_masterdata, customer_price_list, standard_cost, icp
+        - name: dataframe
+          default: ""
+        # Comma separated Fiscal_Year_Period values, e.g. "P4 FY26,P5 FY26".
+        # Leave empty to derive the periods from the data (18periods).
+        # Ignored for the full load assets (masterdata, price, cost, icp).
+        - name: year_period_list
+          default: ""

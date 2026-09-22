@@ -1,0 +1,148 @@
+  trigger:
+    branches:
+      include:
+        - main
+        - development
+  
+  pool:
+    vmImage: 'ubuntu-22.04'
+  
+  resources:
+    repositories:
+      - repository: templates
+        type: git
+        name: "Mars Snacking Data and Platform DNA/mdsp-catalog"
+        ref: refs/tags/v2.17.1 
+
+  variables:
+    # - group: DNA_SECRETS_DEV
+    - name: cliSources
+      value: "mwd30anaplan/test/test_feature/"
+    - name: pythonVersion
+      value: "3.10"
+    - name: workspace_url_dev
+      value: "https://adb-2684412046529963.3.azuredatabricks.net"
+    - name: workspace_url_prod
+      value: "https://adb-4153041687061833.13.azuredatabricks.net"
+    - name: cliProjectKey
+      value: "DNA-FINANCEMWD30ANAPLAN"
+    - name: cliProjectName
+      value: "DNA-FINANCEMWD30ANAPLAN"
+    - name: sonarQubeServiceConnection
+      value: "DNA-FINANCEMWD30ANAPLAN"
+
+  name: "$(Date:yyyyMMdd) ID $(Rev:.r)" 
+  
+  stages:
+
+  - ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/development') }}:
+        - stage: DEV
+          displayName: "DEV - deploy Databricks resources"
+          variables:
+            - group: DNA_SECRETS_DEV
+          jobs:
+            - template: jobs/databricks_asset_bundles/ephemeral-bundle-deploy-job.yml@templates
+              parameters:
+                environment: dev
+                pythonVersion: $(pythonVersion)
+                azureTenantId: $(TENANT_ID)
+                azureClientId: $(DEV_APPLICATION_ID)
+                azureClientSecret: $(DEV_CLIENT_SECRET)
+                poetrySourceName: "simpel-framework"
+                sonarqubeInstance: $(sonarQubeServiceConnection)
+                projectKey: $(cliProjectKey)
+                projectName: $(cliProjectName)
+                runUnitTests: "True"
+                databricksVersion: v0.297.2
+
+  - ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/main') }}:
+        - stage: PROD
+          displayName: "Prod - deploy Databricks resources"
+          variables:
+            - group: DNA_SECRETS_PROD
+          jobs:
+            - template: jobs/databricks_asset_bundles/ephemeral-bundle-deploy-job.yml@templates
+              parameters:
+                environment: prod
+                pythonVersion: $(pythonVersion)
+                azureTenantId: $(TENANT_ID)
+                azureClientId: $(PROD_APPLICATION_ID)
+                azureClientSecret: $(PROD_CLIENT_SECRET)
+                sonarqubeInstance: $(sonarQubeServiceConnection)
+                projectKey: $(cliProjectKey)
+                projectName: $(cliProjectName)
+                runUnitTests: "True"
+                databricksVersion: v0.297.2
+
+
+  - stage: SonarAnalysis
+    displayName: "SonarAnalysis"
+
+    jobs:
+    - job: SonarScan
+      steps:
+        - task: UsePythonVersion@0
+          inputs:
+            versionSpec: '3.10'
+
+        # Install Java 17
+        - script: |
+            echo "Installing Java 17..."
+            sudo apt-get update
+            sudo apt-get install -y openjdk-17-jdk
+            java -version
+          displayName: "Install Java 17"
+
+        # Setup Python + Poetry
+        - script: |
+            export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+            export PATH=$JAVA_HOME/bin:$PATH
+
+            python --version
+            pip install poetry
+            poetry env use python
+            poetry env info
+            poetry config http-basic.simpel-framework $(systemToken) $(systemToken)
+            poetry install
+          displayName: "Env Setup"
+
+        # Run tests with correct Java
+        - script: |
+            export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+            export PATH=$JAVA_HOME/bin:$PATH
+
+            java -version
+            poetry run pytest mwd30anaplan/test/ --doctest-modules --junitxml=junit/pytest-results.xml --cov=mwd30anaplan/data_engineering/data_processing/feature/ --cov-report=xml --cov-report=html
+          displayName: 'Run Unit Tests with Coverage'
+
+        - task: PublishTestResults@2
+          displayName: 'Publish Test Results'
+          inputs:
+            testResultsFiles: '**/pytest-results.xml'
+            testRunTitle: 'Pytest Results'
+
+        - task: PublishCodeCoverageResults@2
+          displayName: 'Publish Coverage Report'
+          inputs:
+            codeCoverageTool: Cobertura
+            summaryFileLocation: '**/coverage.xml'
+            reportDirectory: '**/htmlcov'
+
+        - task: SonarQubePrepare@7
+          displayName: 'Prepare analysis on SonarQube'
+          inputs:
+            SonarQube: $(sonarQubeServiceConnection)
+            scannerMode: CLI
+            configMode: manual
+            cliProjectKey: $(sonarqubeProjectKey)
+            cliProjectName: $(sonarqubeProjectName)  
+            cliSources: mwd30anaplan/data_engineering/data_processing/feature
+            extraProperties: |
+              sonar.verbose=true
+              sonar.python.coverage.reportPaths=/home/vsts/work/1/s/coverage.xml
+
+        - task: SonarQubeAnalyze@7
+          displayName: 'Run Code Analysis'
+
+        - task: SonarQubePublish@7
+          displayName: 'Publish Quality Gate Result'

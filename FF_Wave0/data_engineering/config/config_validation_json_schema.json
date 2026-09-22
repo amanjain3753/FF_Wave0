@@ -1,0 +1,1130 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Simpel's project config json schema",
+    "patternProperties": {
+        "type": "object",
+        "^[A-Z0-9_]+$": {
+            "description": "Process Name",
+            "properties": {
+                "range_finder": {
+                    "description": "trigger simpel to find any dates for which output is missing and trigger iterative execution over the dates",
+                    "oneOf": [
+                        {   
+                            "type": "object",
+                            "properties":{
+                                "finder_type": {
+                                    "const": "hive_range_finder",
+                                    "description": "Range Finder to be invoked"
+                                },
+                                "driver_table": {
+                                    "type": "string",
+                                    "description": "fully qualified table name which will be used by simpel to identify the last execution date/ last successful execution date"
+                                },
+                                "driver_cron": {
+                                    "type": "string",
+                                    "description": "cron syntax which will be used to filter the list of dates for which data is missing, this represents the execution schedule of the pipeline"
+                                },
+                                "default_date": {
+                                    "type": "string",
+                                    "pattern": "^\\d{4}[-]?\\d{2}[-]?\\d{2}$",
+                                    "description": "default date to be used in case the driver table does not exist, for eg. on the first execution. Expected in output"
+                                },
+                                "output_format": {
+                                    "type": "string",
+                                    "default": "%Y%m%d",
+                                    "pattern": "%[Ymde]",
+                                    "description": "format the output list of dates to process to match this format, default is %Y%m%d"
+                                }
+                            },
+                            "required": ["driver_table", "driver_cron"]
+                        },
+                        {   
+                            "type": "object",
+                            "properties":{
+                                "finder_type": {
+                                    "const": "file_range_finder",
+                                    "description": "Range Finder to be invoked"
+                                },
+                                "driver_table_location": {
+                                    "type": "string",
+                                    "description": "fully qualified table path which will be used by simpel to identify the last execution date/ last successful execution date"
+                                },
+                                "driver_cron": {
+                                    "type": "string",
+                                    "description": "cron syntax which will be used to filter the list of dates for which data is missing, this represents the execution schedule of the pipeline"
+                                },
+                                "driver_table_format": {
+                                    "type": "string",
+                                    "description": "File format of the driver table",
+                                    "enum": [
+                                        "parquet",
+                                        "delta"
+                                    ]
+                                },
+                                "driver_end_date": {
+                                    "type": "string",
+                                    "description": "Driver end date to considered while generating process dates, defaults to current_date, Expected in output_format"
+                                },
+                                "default_date": {
+                                    "type": "string",
+                                    "pattern": "^\\d{4}[-]?\\d{2}[-]?\\d{2}$",
+                                    "description": "default date to be used in case the driver table does not exist, for eg. on the first execution. Expected in output"
+                                },
+                                "output_format": {
+                                    "type": "string",
+                                    "default": "%Y%m%d",
+                                    "pattern": "%[Ymde]",
+                                    "description": "format the output list of dates to process to match this format, default is %Y%m%d"
+                                }
+                            },
+                            "required": ["driver_table_location", "driver_cron", "driver_table_format"]
+                        },
+                        {
+                            "type": "object",
+                            "properties":{
+                                "finder_type": {
+                                    "const": "mars_file_range_finder",
+                                    "description": "Range Finder to be invoked"
+                                },
+                                "driver_table_location": {
+                                    "type": "string",
+                                    "description": "fully qualified table path which will be used by simpel to identify the last execution date/ last successful execution date"
+                                },
+                                "driver_cadence": {
+                                    "type": "string",
+                                    "description": "mars_period/ mars_year",
+                                    "enum": [
+                                        "mars_period",
+                                        "mars_year"
+                                    ]
+                                },
+                                "output_format": {
+                                    "type": "string",
+                                    "enum": [
+                                        "yyyypp",
+                                        "yyyyPpp",
+                                        "yyyyPppWww",
+                                        "yyyyPppWwwDdd"
+                                    ],
+                                    "default": "yyyyPpp",
+                                    "description": "format the output list of dates to process to match this format, default is yyyyPpp"
+                                },
+                                "driver_table_format": {
+                                    "type": "string",
+                                    "description": "File format of the driver table",
+                                    "enum": [
+                                        "parquet",
+                                        "delta"
+                                    ]
+                                },
+                                "driver_end_date": {
+                                    "type": "string",
+                                    "description": "Driver end date to considered while generating process dates, defaults to current_date, Expected in output_format"
+                                },
+                                "default_date": {
+                                    "type": "string",
+                                    "pattern": "^2\\d{3}$|^2\\d{3}(0[1-9]|1[0-3])$|^\\d{4}P(0[1-9]|1[0-3])$|^\\d{4}P(0[1-9]|1[0-3])W(0[1-5])$|^\\d{4}P(0[1-9]|1[0-3])W(0[1-5])D(0[1-7])$",
+                                    "description": "default date to be used in case the driver table does not exist, for eg. on the first execution. Expected in mars output format"
+                                }
+                            },
+                            "required": ["driver_table_location", "driver_cadence", "driver_table_format", "output_format"]
+                        }
+                    ],
+                    "properties":{
+                        "finder_type": {
+                            "type": "string",
+                            "description": "Name of the rangefinder logic to be used",
+                            "enum": [
+                                "hive_range_finder",
+                                "default_range_finder",
+                                "file_range_finder",
+                                "mars_file_range_finder"
+                            ]
+                        },
+                        "driver_column": {
+                            "type": "string",
+                            "description": "name of the column in the driver table which will be used to find the last successful execution date, basically a date which represents the execution date"
+                        },
+                        "driver_column_format": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "description": "format of the driver column will be used to get date type object if the driver_column is string"
+                        }
+                    },
+                    "required": [
+                        "finder_type",
+                        "driver_column",
+                        "driver_column_format",
+                        "default_date",
+                        "output_format"
+                    ],
+                    "additionalProperties": true
+                },
+                "input": {
+                    "type": "array",
+                    "items": {
+                        "oneOf": [
+                            {
+                                "type": "object",
+                                "description": "File reader, to be used when working with file base storage formats like delta, orc etc. Uses spark reader in the implementation",
+                                "properties": {
+                                    "type_of_input": {
+                                        "const": "file_reader",
+                                        "description": "reader to be invoked"
+                                    },
+                                    "file_path": {
+                                        "type": "string",
+                                        "description": "location path from where the data is to be read"
+                                    },
+                                    "dataframe_name": {
+                                        "type": "string",
+                                        "description": "name of the  dataframe by which the data will be made available to transformation function"
+                                    },
+                                    "file_format": {
+                                        "type": "string",
+                                        "description": "file format to be read from, eg. delta"
+                                    },
+                                    "options": {
+                                        "type": "object",
+                                        "description": "key value pairs of configs which will be passed to options to spark reader"
+                                    }
+                                },
+                                "additionalProperties": false,
+                                "required": [
+                                    "type_of_input",
+                                    "dataframe_name",
+                                    "file_format",
+                                    "file_path"
+                                ]
+                            },
+                            {
+                                "type": "object",
+                                "description": "Reader to read from hive metastore, uses spark in the backend for read",
+                                "properties": {
+                                    "type_of_input": {
+                                        "const": "hive",
+                                        "description": "reader to be invoked"
+                                    },
+                                    "dataframe_name": {
+                                        "type": "string",
+                                        "description": "name of the  dataframe by which the data will be made eavailable to transformation function"
+                                    },
+                                    "table_name": {
+                                        "type": "string",
+                                        "pattern": "[a-z_]+\\.[a-z_]+",
+                                        "description": "fully qualified name of the table to be read"
+                                    },
+                                    "input_condition": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "description": "filter to be applied to the read data, internally it is similar to where condition running after read"
+                                    }
+                                },
+                                "additionalProperties": false,
+                                "required": [
+                                    "type_of_input",
+                                    "dataframe_name",
+                                    "table_name",
+                                    "input_condition"
+                                ]
+                            },
+                            {
+                                "type": "object",
+                                "description": "Reader to read data from sql database, uses spark in the implementation",
+                                "properties": {
+                                    "type_of_input": {
+                                        "const": "sql",
+                                        "description": "name of the reader to be invoked"
+                                    },
+                                    "dataframe_name": {
+                                        "type": "string",
+                                        "description": "name of the  dataframe by which the data will be made eavailable to transformation function"
+                                    },
+                                    "table_name": {
+                                        "type": "string",
+                                        "pattern": "[a-z_]+\\.[a-z_]+|[a-z_]",
+                                        "description": "fully qualified table name to be read"
+                                    },
+                                    "creds_provider": {
+                                        "type": "string",
+                                        "enum": [
+                                            "databricks"
+                                        ],
+                                        "description": "Name of the credential manager service to be invoked"
+                                    },
+                                    "input_condition": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "description": "where condition to be applied to the reader,If an 'input_condition' is included along with the query, the query takes precedence over the input_condition"
+                                    },
+                                    "query": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "description": "a string sql query which will be executed to load the data"
+                                    },
+                                    "options": {
+                                        "type": "object",
+                                        "description": "key value pairs of configs which will be passed to options to spark reader"
+                                    },
+                                    "url": {
+                                        "type": "string",
+                                        "description": "jdbc/odbd write path"
+                                    },
+                                    "creds": {
+                                        "allOf": [
+                                            {
+                                                "type": "object",
+                                                "description": "creadentials for authenticating to sql server",
+                                                "properties": {
+                                                    "scope_or_kv_name": {
+                                                        "type": "string",
+                                                        "description": "name of the scope or the keyvault name"
+                                                    },
+                                                    "user_name": {
+                                                        "type": "string",
+                                                        "description": "username which will bused for the execution "
+                                                    },
+                                                    "password": {
+                                                        "type": "string",
+                                                        "description": "enter the auth value which will be used by authentication "
+                                                    },
+                                                    "url": {
+                                                        "type": "string",
+                                                        "description": ""
+                                                    }
+                                                },
+                                                "additionalProperties": "false",
+                                                "required": [
+                                                    "scope_or_kv_name",
+                                                    "user_name",
+                                                    "password"
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                },
+                                "additionalProperties": false,
+                                "required": [
+                                    "type_of_input",
+                                    "dataframe_name",
+                                    "table_name",
+                                    "creds",
+                                    "creds_provider"
+                                ]
+                            },
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "type_of_input": {
+                                        "const": "pandas_excel",
+                                        "description": "Reader to read excel files uses pandas in the implementation"
+                                    },
+                                    "dataframe_name": {
+                                        "type": "string",
+                                        "description": "name of the  dataframe by which the data will be made eavailable to transformation function"
+                                    },
+                                    "file_path": {
+                                        "type": "string",
+                                        "description": "location path from where the data is to be read"
+                                    },
+                                    "options": {
+                                        "type": "object",
+                                        "description": "filter to be applied to the read data, internally it is similar to where condition running after read"
+                                    }
+                                },
+                                "additionalProperties": false,
+                                "required": [
+                                    "type_of_input",
+                                    "dataframe_name",
+                                    "file_path"
+                                ]
+                            },
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "type_of_input": {
+                                        "const": "pyspark_pandas",
+                                        "description": "pandas api on spark reader"
+                                    },
+                                    "dataframe_name": {
+                                        "type": "string",
+                                        "description": "name of the  dataframe by which the data will be made available to transformation function"
+                                    },
+                                    "file_path": {
+                                        "type": "string",
+                                        "description": "location path from where the data is to be read"
+                                    },
+                                    "options": {
+                                        "type": "object",
+                                        "description": "key value pairs which are passed to underlying reader to configure setup. refer to pyspark.pandas.read_excel docs"
+                                    },
+                                    "file_format": {
+                                        "type": "string",
+                                        "description": "type of file to be read, excel: uses pandas api on spark to provide parallel read on spark clusters",
+                                        "enum": [
+                                            "excel"
+                                        ]
+                                    }
+                                },
+                                "additionalProperties": false,
+                                "required": [
+                                    "type_of_input",
+                                    "dataframe_name",
+                                    "file_path",
+                                    "file_format"
+                                ]
+                            },
+                            {
+                                "type": "object",
+                                "description": "Spark Structured Streaming Reader",
+                                "properties": {
+                                    "dataframe_name": {
+                                        "type": "string",
+                                        "description": "name of the dataframe by which the data will be made eavailable to transformation function"
+                                    },
+                                    "type_of_input": {
+                                        "const": "spark_stream_reader",
+                                        "description": "reader to be invoked"
+                                    },
+                                    "format": {
+                                        "type": "string",
+                                        "description": "Specifies the input data source format"
+                                    },
+                                    "file_path": {
+                                        "type": "string",
+                                        "description": "string path for a file-system backed data source"
+                                    },
+                                    "table": {
+                                        "type": "string",
+                                        "description": "input table on which the streaming data source will be defined"
+                                    },
+                                    "options": {
+                                        "type": "object",
+                                        "description": "dict of key value pairs to be used to configure the stream reader object"
+                                    },
+                                    "schema": {
+                                        "type": "string",
+                                        "description": "example:\"col0 INT, col1 STRING\" Specifies the input schema, Some data sources (e.g. JSON) can infer the input schema automatically from data. By specifying the schema here, the underlying data source can skip the schema inference step, and thus speed up data loading."
+                                    }
+                                },
+                                "required": [
+                                    "dataframe_name",
+                                    "type_of_input",
+                                    "format"
+                                ]
+                            }
+                        ]
+                    }
+                },
+                "output": {
+                    "type": "array",
+                    "items": {
+                        "oneOf": [
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "type_of_write": {
+                                        "const": "hive"
+                                    },
+                                    "dataframe_name": {
+                                        "type": "string"
+                                    },
+                                    "table_name": {
+                                        "type": "string",
+                                        "pattern": "[a-z_]+\\.[a-z_]+"
+                                    },
+                                    "insert_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "overwrite",
+                                            "append"
+                                        ]
+                                    },
+                                    "write_format": {
+                                        "type": "string",
+                                        "enum": [
+                                            "parquet",
+                                            "delta"
+                                        ]
+                                    },
+                                    "write_path": {
+                                        "type": "string"
+                                    }
+                                },
+                                "additionalProperties": false,
+                                "required": [
+                                    "type_of_write",
+                                    "dataframe_name",
+                                    "table_name",
+                                    "insert_type",
+                                    "write_format",
+                                    "write_path"
+                                ]
+                            },
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "type_of_write": {
+                                        "const": "sql"
+                                    },
+                                    "dataframe_name": {
+                                        "type": "string"
+                                    },
+                                    "table_name": {
+                                        "type": "string",
+                                        "pattern": "[a-z_]+\\.[a-z_]+"
+                                    },
+                                    "creds_provider": {
+                                        "type": "string",
+                                        "enum": [
+                                            "databricks",
+                                            "keyvault"
+                                        ]
+                                    },
+                                    "url": {
+                                        "type": "string"
+                                    },
+                                    "options": {
+                                        "type": "object",
+                                        "properties": {
+                                            "mode": {
+                                                "type": "string",
+                                                "enum": [
+                                                    "append",
+                                                    "overwrite",
+                                                    "error",
+                                                    "ignore",
+                                                    "upsert"
+                                                ]
+                                            }
+                                        },
+                                        "additionalProperties": "true"
+                                    } 
+                                },
+                                "allOf":[
+                                    {
+                                        "if":{
+                                            "properties": {
+                                                "options": {
+                                                    "properties":{
+                                                            "mode": {
+                                                                "const": "upsert"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "then":{
+                                            "properties":{
+                                                "stored_procedure": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "temp_table": {
+                                                            "type": "string"
+                                                        },
+                                                        "connection_string": {
+                                                            "type": "string"
+                                                        },
+                                                        "procedure_call": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "temp_table",
+                                                        "connection_string",
+                                                        "procedure_call"
+                                                    ]
+                                                }
+                                            },
+                                            "required": ["stored_procedure"]
+                                        }
+                                    }
+                                ],
+                                "required": [
+                                    "type_of_write",
+                                    "dataframe_name",
+                                    "table_name",
+                                    "creds_provider",
+                                    "creds",
+                                    "options",
+                                    "url"
+                                ],
+                                "additionalProperties": false
+                            },
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "type_of_write": {
+                                        "const": "file_writer",
+                                        "description": "writer to be used for writeing file based storage formats, uses spark.writer.format() internally"
+                                    },
+                                    "dataframe_name": {
+                                        "type": "string",
+                                        "description": "name of the  dataframe by which the data will be made available to transformation function"
+                                    },
+                                    "insert_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "overwrite",
+                                            "append"
+                                        ]
+                                    },
+                                    "write_format": {
+                                        "type": "string",
+                                        "enum": [
+                                            "parquet",
+                                            "delta",
+                                            "csv",
+                                            "orc",
+                                            "delta_merge"
+                                        ]
+                                    },
+                                    "write_path": {
+                                        "type": "string"
+                                    },
+                                    "options": {
+                                        "type": "object"
+                                    },
+                                    "partition_columns": {
+                                        "type": "array"
+                                    },
+                                    "num_partitions": {
+                                        "type": "number"
+                                    },
+                                    "coalesce": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "required": [
+                                    "dataframe_name",
+                                    "insert_type",
+                                    "type_of_write",
+                                    "write_format",
+                                    "write_path"
+                                ],
+                                "allOf": [
+                                    {
+                                        "if": {
+                                            "properties": {
+                                                "write_format": {
+                                                    "const": "delta_merge"
+                                                }
+                                            },
+                                            "required": [
+                                                "write_format"
+                                            ]
+                                        },
+                                        "then": {
+                                            "properties": {
+                                                "merge_config": {
+                                                    "type": "object",
+                                                    "description": "config to build merge builder, required fiels:  'condition' and atleast one of the 'when' conditions",
+                                                    "properties": {
+                                                        "condition": {
+                                                            "type": "string"
+                                                        },
+                                                        "whenMatchedUpdateAll": {
+                                                            "type": "string"
+                                                        },
+                                                        "whenMatchedUpdate": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "condition": {
+                                                                    "type": "string"
+                                                                },
+                                                                "set": {
+                                                                    "type": "object"
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "condition",
+                                                                "set"
+                                                            ]
+                                                        },
+                                                        "whenMatchedDelete": {
+                                                            "type": "string"
+                                                        },
+                                                        "whenNotMatchedInsertAll": {
+                                                            "type": "string"
+                                                        },
+                                                        "whenNotMatchedInsert": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "condition": {
+                                                                    "type": "string"
+                                                                },
+                                                                "values": {
+                                                                    "type": "object"
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "values",
+                                                                "condition"
+                                                            ]
+                                                        },
+                                                        "whenNotMatchedBySourceUpdate": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "condition": {
+                                                                    "type": "string"
+                                                                },
+                                                                "set": {
+                                                                    "type": "object"
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "set",
+                                                                "condition"
+                                                            ]
+                                                        },
+                                                        "whenNotMatchedBySourceDelete": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "condition"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "merge_config"
+                                            ]
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "type_of_write": {
+                                        "const": "scd_writer",
+                                        "description": "scd writer which internally is based on delta merge"
+                                    },
+                                    "scd_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "scd1",
+                                            "scd2",
+                                            "cdf_scd2"
+                                        ],
+                                        "description": "type of scd to be maintained"
+                                    },
+                                    "partition_columns": {
+                                        "type": "array",
+                                        "description": "list of column names used as partitions in the output table"
+                                    },
+                                    "write_path": {
+                                        "type": "string",
+                                        "description": "path to location where the data will be written to"
+                                    },
+                                    "dataframe_name": {
+                                        "type": "string",
+                                        "description": "name of the output dataframe being written out"
+                                    },
+                                    "table_name": {
+                                        "type": "string",
+                                        "pattern": "[a-z_]+\\.[a-z_]+",
+                                        "description": "name of the output table name, if it does not exits it will be created"
+                                    },
+                                    "id_cols": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "description": "list of columns which will be used as keys for the merge operation"
+                                    },
+                                    "hash_id_cols": {
+                                        "type": "boolean"
+                                    },
+                                    "hashing_algo": {
+                                        "type": "string",
+                                        "description": "string value which if provided will indicate building a key and data hash column in the final table"
+                                    }
+                                },
+                                "required": [
+                                    "type_of_write",
+                                    "scd_type",
+                                    "write_path",
+                                    "table_name",
+                                    "dataframe_name",
+                                    "id_cols"
+                                ],
+                                "allOf": [
+                                    {
+                                        "if": {
+                                            "properties": {
+                                                "scd_type": {
+                                                    "const": "cdf_scd2"
+                                                }
+                                            },
+                                            "required": [
+                                                "scd_type"
+                                            ]
+                                        },
+                                        "then": {
+                                            "properties": {
+                                                "update_condition": {
+                                                    "type": "string",
+                                                    "description": "value to be used to indicate an update"
+                                                },
+                                                "delete_condition": {
+                                                    "type": "string",
+                                                    "description": "value to be used to indicate a delete"
+                                                }
+                                            },
+                                            "required": [
+                                                "delete_condition"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "if": {
+                                            "properties": {
+                                                "scd_type": {
+                                                    "const": "scd2"
+                                                }
+                                            },
+                                            "required": [
+                                                "scd_type"
+                                            ]
+                                        },
+                                        "then": {
+                                            "properties": {
+                                                "enable_full_delete": {
+                                                    "type": "boolean",
+                                                    "description": "if true, will enable expiry of the data from the output table if not provided in update df"
+                                                },
+                                                "data_cols": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    },
+                                                    "description": "list of columns which will be concatenated and hashed to build identifier"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "if": {
+                                            "properties": {
+                                                "scd_type": {
+                                                    "const": "scd1"
+                                                }
+                                            },
+                                            "required": [
+                                                "scd_type"
+                                            ]
+                                        },
+                                        "then": {
+                                            "properties": {
+                                                "enable_full_delete": {
+                                                    "type": "boolean",
+                                                    "description": "if true, will enable expiry of the data from the output table if not provided in update df"
+                                                },
+                                                "data_cols": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    },
+                                                    "description": "list of columns which will be concatenated and hashed to build identifier"
+                                                }
+                                            }
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "type_of_write": {
+                                        "const": "spark_stream_writer",
+                                        "description": "writer type for spar structured streaming pipelines, (suggested to provide checkpoint location when setting up)"
+                                    },
+                                    "dataframe_name": {
+                                        "type": "string",
+                                        "description": "name of the  dataframe by which the data will be made available to transformation function"
+                                    },
+                                    "write_path": {
+                                        "type": "string",
+                                        "description": "target path to be used as sink for structured streams output"
+                                    },
+                                    "format": {
+                                        "type": "string",
+                                        "description": "specifies the underlying output data source"
+                                    },
+                                    "options": {
+                                        "type": "object",
+                                        "description": "key value pairs for adding output options for the underlying data source",
+                                        "properties": {
+                                            "type": "object",
+                                            "checkpointLocation": {
+                                                "type": "string",
+                                                "description": "file location which will be used as the checkpoint location for the current stream. (note: this is the source of truth for the stream and will be used by spark to track and recover incase of failure)"
+                                            }
+                                        },
+                                        "required": [
+                                            "checkpointLocation"
+                                        ]
+                                    },
+                                    "output_mode": {
+                                        "type": "string",
+                                        "enum": [
+                                            "append",
+                                            "complete",
+                                            "update"
+                                        ],
+                                        "description": "Specifies how data of a streaming DataFrame is written to a streaming sink"
+                                    },
+                                    "partition_by": {
+                                        "type": "string",
+                                        "description": "Specifiy the partitioning schema"
+                                    },
+                                    "query_name": {
+                                        "type": "string",
+                                        "description": "specifies the name of the StreamingQuery, this must be unique per spark session"
+                                    },
+                                    "table": {
+                                        "type": "string",
+                                        "description": "table name to which the stream will continually output results  as new data arrives"
+                                    },
+                                    "trigger": {
+                                        "type": "object",
+                                        "description": "trigger which will define how often the stream will be executed, ONLY ONE VALUE CAN BE SET",
+                                        "properties": {
+                                            "processingTime": {
+                                                "type": "string",
+                                                "description": "a processing time interval as a string, e.g. ‘5 seconds’, ‘1 minute’. Set a trigger that runs a microbatch query periodically based on the processing time. Only one trigger can be set."
+                                            },
+                                            "once": {
+                                                "type": "boolean",
+                                                "description": "if set to True, set a trigger that processes only one batch of data in a streaming query then terminates the query. Only one trigger can be set."
+                                            },
+                                            "continuous": {
+                                                "type": "string",
+                                                "description": "a time interval as a string, e.g. ‘5 seconds’, ‘1 minute’. Set a trigger that runs a continuous query with a given checkpoint interval. Only one trigger can be set. Note: a process can support only one continuous stream"
+                                            },
+                                            "availableNow": {
+                                                "type": "boolean",
+                                                "description": "if set to True, set a trigger that processes all available data in multiple batches then terminates the query. Only one trigger can be set."
+                                            }
+                                        }
+                                    }
+                                },
+                                "required": [
+                                    "type_of_write",
+                                    "dataframe_name",
+                                    "format",
+                                    "output_mode",
+                                    "options"
+                                ],
+                                "allOf": {}
+                            }
+                        ]
+                    }
+                },
+                "deequ": {
+                    "type": "object",
+                    "description": "set up data quality validation for output",
+                    "properties": {
+                        "stopper": {
+                            "type": "string",
+                            "description": "choose how to handle dq failure, hard (stop execution)",
+                            "enum": [
+                                "soft",
+                                "hard"
+                            ]
+                        },
+                        "pydeequ": {
+                            "type": "object",
+                            "decription": "Pydeequ Wrapper Tests",
+                            "patternProperties": {
+                                "^[a-z0-9_]+$": {
+                                    "type": "object",
+                                    "description": "Dataframe name on which the test is expected to be executed",
+                                    "properties": {
+                                        "complete": {
+                                            "type": "array",
+                                            "description": "Fraction of non-missing values in a column."
+                                        },
+                                        "unique": {
+                                            "type": "array",
+                                            "description": "Asserts on a column's uniqueness"
+                                        },
+                                        "contained_in": {
+                                            "type": "object",
+                                            "decription": "Asserts that every non-null value in a column is contained in a set of predefined values.",
+                                            "patternProperties":{
+                                                "[A-Za-z0-9_ ]*" : {
+                                                    "type": "array",
+                                                    "decription": "list of string values"
+                                                }
+                                            }
+                                        },
+                                        "non_negative": {
+                                            "type": "array",
+                                            "description": "Asserts that a column contains no negative values"
+                                        },
+                                        "size": {
+                                            "type": "integer",
+                                            "description": "Number of records"
+                                        },
+                                        "has_min": {
+                                            "type": "object",
+                                            "description": "Asserts on the minimum value in the column",
+                                            "patternProperties":{
+                                                "[A-Za-z0-9_ ]*" : {
+                                                    "type": "integer",
+                                                    "decription": "Minimum Value to be checked"
+                                                }
+                                            }
+                                        },
+                                        "has_max": {
+                                            "type": "object",
+                                            "description": "Asserts on the maximum value in the column",
+                                            "patternProperties":{
+                                                "[A-Za-z0-9_ ]*" : {
+                                                    "type": "integer",
+                                                    "decription": "Maximum Value to be checked"
+                                                }
+                                            }
+                                        },
+                                        "sum": {
+                                            "type": "object",
+                                            "description": "Asserts on the sum of column values",
+                                            "patternProperties":{
+                                                "[A-Za-z0-9_ ]*" : {
+                                                    "type": "integer",
+                                                    "decription": "Total Sum Value of the particular column to be checked"
+                                                }
+                                            }
+                                        },
+                                        "mean": {
+                                            "type": "object",
+                                            "description": "Asserts on the mean of column values",
+                                            "patternProperties":{
+                                                "[A-Za-z0-9_ ]*" : {
+                                                    "type": "integer",
+                                                    "decription": "Total Mean Value of the particular column to be checked"
+                                                }
+                                            }
+                                        },
+                                        "standard_deviation": {
+                                            "type": "object",
+                                            "description": "Asserts on the standard deviation of the column",
+                                            "patternProperties":{
+                                                "[A-Za-z0-9_ ]*" : {
+                                                    "type": "integer",
+                                                    "decription": "Standard Deviation of the particular column to be checked"
+                                                }
+                                            }
+                                        },
+                                        "has_uniqueness": {
+                                            "type": "array",
+                                            "description": "Asserts any uniqueness in a single or combined set of key columns"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "custom": {
+                            "type": "object",
+                            "description": "Custom tests",
+                            "properties":{
+                                "multi_data":{
+                                    "type": "object",
+                                    "description": "keyword to pass multiple dataframes to the custom test as specified in dataframe_dict",
+                                    "properties":{
+                                        "data_outlier":{
+                                            "type": "object",
+                                            "description": "Custom validation of data outlier for data accuracy and consistency (Uses alibi-detect's IForest)",
+                                            "properties":{
+                                                "dataframe_dict": {
+                                                    "type": "object",
+                                                    "description": "Establishing the train dataframe and test dataframe",
+                                                    "minProperties": 2,
+                                                    "maxProperties": 2,
+                                                    "properties":{
+                                                        "train": {
+                                                            "type": "string"
+                                                        },
+                                                        "test": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                },
+                                                "list_of_cols": {
+                                                    "type": "array",
+                                                    "description": " List of column names"
+                                                }
+                                            }
+                                        },
+                                        "data_drift":{
+                                            "type": "object",
+                                            "description": "Custom validation of data drift to maintain up-to-date relevance (Uses alibi-detect’s KSDrift)",
+                                            "properties":{
+                                                "dataframe_dict": {
+                                                    "type": "object",
+                                                    "description": "Establishing the train dataframe and test dataframe",
+                                                    "minProperties": 2,
+                                                    "maxProperties": 2,
+                                                    "properties":{
+                                                        "train": {
+                                                            "type": "string"
+                                                        },
+                                                        "test": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                },
+                                                "list_of_cols": {
+                                                    "type": "array",
+                                                    "description": " List of column names"
+                                                }
+                                            }
+                                    
+                                        }
+                                    }
+                                }
+                            },
+                            "patternProperties": {
+                                "^[a-z0-9_]+$": {
+                                    "type": "object",
+                                    "description": "Dataframe name on which the test is expected to be executed",
+                                    "properties": {
+                                        "data_avail" : {
+                                            "type": "object",
+                                            "description": "Custom validation of data availability for accurate information assurance.",
+                                            "patternProperties": {
+                                                "^[a-z0-9_]+$": {
+                                                    "type": "array",
+                                                    "description": "Column Name"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                               
+                        }
+                    },
+                    
+                    "required": [
+                        "stopper"
+                    ]
+                }
+            },
+            "required": [
+                "input",
+                "output"
+            ]
+        }
+    }
+}

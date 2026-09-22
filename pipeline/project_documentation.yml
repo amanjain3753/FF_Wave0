@@ -1,0 +1,46 @@
+trigger:
+  branches:
+    include:
+    - main
+
+variables:
+  - name: deployAzureFeed
+    value:
+  - name: approvalEmails
+    value:
+  - name: pythonVersion
+    value: '3.9'
+  - name: documentProjectName
+    value: 'PET SUPPLY CHAIN'
+  - name: documentSourceBranch
+    value: "staging_branch"
+  - name: documentTargetBranch
+    value: "automate_doc"
+  - name: documentProjectSegment
+    value: "Pet_Nutrition"
+  - name: azureSubscription_dev
+    value: "Development"
+  - name: documentRepository
+    value: "Simpel_Project_Documents"
+
+resources:
+  repositories:
+  - repository: MDS_SIMPEL_TEMPLATES
+    type: git
+    name: "Pet Nutrition Data and Analytics DNA/MDS_SIMPEL_TEMPLATES"
+    ref: refs/heads/feature/initial_templates  # Replace with the desired branch or commit reference
+
+name: $(TeamProject)_$(Build.DefinitionName)_$(Date:yyyyMMdd)$(Rev:.r)
+
+extends:
+  template: pipelines/shared-pipelines/build-deploy/build-publish-document.yaml@MDS_SIMPEL_TEMPLATES
+  parameters:
+    deployAzureFeed: $(deployAzureFeed)
+    approvalEmails: $(approvalEmails)
+    pythonVersion: $(pythonVersion)
+    documentProjectName: $(documentProjectName)
+    documentSourceBranch: $(documentSourceBranch)
+    documentTargetBranch: $(documentTargetBranch)
+    documentProjectSegment: $(documentProjectSegment)
+    azureSubscription_dev: $(azureSubscription_dev)
+    documentRepository: $(documentRepository)

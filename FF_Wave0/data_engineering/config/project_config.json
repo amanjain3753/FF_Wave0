@@ -1,0 +1,27 @@
+{
+  "$schema": "./config_validation_json_schema.json",
+  "MOCK_DATA": {
+    "input": [
+      {
+        "dataframe_name": "mars_calendar",
+        "type_of_input": "file_reader",
+        "file_path": "{ADLS_PATH}/mockdata/inputpath/mars_cal.csv",
+        "file_format": "csv",
+        "options": {
+          "header": "true",
+          "inferSchema": "true"
+        }
+      }
+    ],
+    "output": [
+      {
+        "type_of_write": "hive",
+        "dataframe_name": "mars_calendar",
+        "table_name": "{OUTPUT_DB}.mock_mars_calendar",
+        "insert_type": "overwrite",
+        "write_format": "delta",
+        "write_path": "{ADLS_PATH}/mockdata/outputpath/mock_mars_calendar"
+      }
+    ]
+  }
+}

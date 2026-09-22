@@ -1,0 +1,7 @@
+keyring
+artifacts-keyring
+pytest
+pytest-mock
+pytest-cov
+--extra-index-url=https://pkgs.dev.azure.com/marsanalytics/_packaging/simpel_framework/pypi/simple/
+simpel-framework

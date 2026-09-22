@@ -1,0 +1,69 @@
+trigger:
+  branches:
+    include:
+    - main
+    - master
+    - development
+    - pre-development
+
+variables:
+- name: deployAzureFeed
+  value:
+- name: approvalEmails
+  value:
+- name: Version.Major
+  value: 0
+- name: Version.Minor
+  value: 0
+- name: cliProjectKey
+  value: '<Replace Sonar Project Key>'
+- name: cliProjectName
+  value : '<Replace Sonar Project Name>'
+- name: cliSources
+  value : 'FF_Wave0/data_engineering'
+- name: pythonVersion
+  value: '3.9'
+- name: workspace_url_dev
+  value: '<Replace Dev ADB workspace URL>'
+- name: simpel_version
+  value: 'latest'
+- name: azureSubscription_dev
+  value: '<Replace Dev Service Connection>'
+- name: workspace_url_prod
+  value: '<Replace Prod ADB workspace URL>'
+- name: azureSubscription_prod
+  value: '<Replace Prod Service Connection>'
+- name: mainDirectory
+  value: 'FF_Wave0/data_engineering/main'
+- name: sonarQubeServiceConnection
+  value: '<Replace sonar qube service Connection>'
+- name: test_dir
+  value: 'FF_Wave0/test/'
+
+resources:
+  repositories:
+  - repository: MDS_SIMPEL_TEMPLATES
+    type: git
+    name: "Pet Nutrition Data and Analytics DNA/MDS_SIMPEL_TEMPLATES"
+    ref: refs/heads/feature/initial_templates  # Replace with the desired branch or commit reference
+
+name: $(TeamProject)_$(Build.DefinitionName)_$(Date:yyyyMMdd)$(Rev:.r)
+
+extends:
+  template: pipelines/shared-pipelines/build-deploy/build-deploy-project.yaml@MDS_SIMPEL_TEMPLATES
+  parameters:
+    deployAzureFeed: $(deployAzureFeed)
+    versionMajor: $(version.Major)
+    versionMinor: $(version.Minor)
+    approvalEmails: $(approvalEmails)
+    cliProjectKey: $(cliProjectKey)
+    cliProjectName: $(cliProjectName)
+    cliSources: $(cliSources)
+    pythonVersion: $(pythonVersion)
+    workspace_url_dev: $(workspace_url_dev)
+    azureSubscription_dev: $(azureSubscription_dev)
+    workspace_url_prod: $(workspace_url_prod)
+    azureSubscription_prod: $(azureSubscription_prod)
+    mainDirectory: $(mainDirectory)
+    sonarQubeServiceConnection: $(sonarQubeServiceConnection)
+    test_dir: $(test_dir)
